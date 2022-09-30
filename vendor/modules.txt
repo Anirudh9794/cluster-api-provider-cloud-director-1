@@ -47,7 +47,7 @@ github.com/cespare/xxhash/v2
 # github.com/coredns/caddy v1.1.0
 ## explicit; go 1.13
 github.com/coredns/caddy/caddyfile
-# github.com/coredns/corefile-migration v1.0.14
+# github.com/coredns/corefile-migration v1.0.17
 ## explicit; go 1.14
 github.com/coredns/corefile-migration/migration
 github.com/coredns/corefile-migration/migration/corefile
@@ -255,6 +255,18 @@ github.com/replicatedhq/troubleshoot/pkg/redact
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.2
 ## explicit; go 1.13
+# github.com/vmware-tanzu/net-operator-api v0.0.0-20210401185409-b0dc6c297707
+## explicit; go 1.13
+github.com/vmware-tanzu/net-operator-api/api/v1alpha1
+# github.com/vmware-tanzu/vm-operator-api v0.1.4-0.20211029224930-6ec913d11bff
+## explicit; go 1.13
+github.com/vmware-tanzu/vm-operator-api/api/v1alpha1
+# github.com/vmware-tanzu/vm-operator/external/ncp v0.0.0-20211209213435-0f4ab286f64f
+## explicit; go 1.13
+github.com/vmware-tanzu/vm-operator/external/ncp/api/v1alpha1
+# github.com/vmware-tanzu/vm-operator/external/tanzu-topology v0.0.0-20211209213435-0f4ab286f64f
+## explicit; go 1.13
+github.com/vmware-tanzu/vm-operator/external/tanzu-topology/api/v1alpha1
 # github.com/vmware/cloud-provider-for-cloud-director v0.0.0-20220914172655-5856ccb7a3a4
 ## explicit; go 1.17
 github.com/vmware/cloud-provider-for-cloud-director/pkg/util
@@ -265,6 +277,31 @@ github.com/vmware/cloud-provider-for-cloud-director/pkg/vcdswaggerclient
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util
+# github.com/vmware/govmomi v0.27.1
+## explicit; go 1.14
+github.com/vmware/govmomi
+github.com/vmware/govmomi/find
+github.com/vmware/govmomi/history
+github.com/vmware/govmomi/internal
+github.com/vmware/govmomi/list
+github.com/vmware/govmomi/nfc
+github.com/vmware/govmomi/object
+github.com/vmware/govmomi/property
+github.com/vmware/govmomi/session
+github.com/vmware/govmomi/session/keepalive
+github.com/vmware/govmomi/task
+github.com/vmware/govmomi/vapi/internal
+github.com/vmware/govmomi/vapi/rest
+github.com/vmware/govmomi/vapi/tags
+github.com/vmware/govmomi/view
+github.com/vmware/govmomi/vim25
+github.com/vmware/govmomi/vim25/debug
+github.com/vmware/govmomi/vim25/methods
+github.com/vmware/govmomi/vim25/mo
+github.com/vmware/govmomi/vim25/progress
+github.com/vmware/govmomi/vim25/soap
+github.com/vmware/govmomi/vim25/types
+github.com/vmware/govmomi/vim25/xml
 # go.uber.org/atomic v1.7.0
 ## explicit; go 1.13
 go.uber.org/atomic
@@ -385,12 +422,24 @@ google.golang.org/protobuf/types/descriptorpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
+# gopkg.in/fsnotify.v1 v1.4.7
+## explicit
+gopkg.in/fsnotify.v1
+# gopkg.in/gcfg.v1 v1.2.3
+## explicit
+gopkg.in/gcfg.v1
+gopkg.in/gcfg.v1/scanner
+gopkg.in/gcfg.v1/token
+gopkg.in/gcfg.v1/types
 # gopkg.in/inf.v0 v0.9.1
 ## explicit
 gopkg.in/inf.v0
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 ## explicit
 gopkg.in/tomb.v1
+# gopkg.in/warnings.v0 v0.1.2
+## explicit
+gopkg.in/warnings.v0
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
@@ -494,6 +543,7 @@ k8s.io/apimachinery/pkg/util/managedfields
 k8s.io/apimachinery/pkg/util/mergepatch
 k8s.io/apimachinery/pkg/util/naming
 k8s.io/apimachinery/pkg/util/net
+k8s.io/apimachinery/pkg/util/rand
 k8s.io/apimachinery/pkg/util/runtime
 k8s.io/apimachinery/pkg/util/sets
 k8s.io/apimachinery/pkg/util/strategicpatch
@@ -616,6 +666,7 @@ k8s.io/client-go/plugin/pkg/client/auth/openstack
 k8s.io/client-go/rest
 k8s.io/client-go/rest/watch
 k8s.io/client-go/restmapper
+k8s.io/client-go/testing
 k8s.io/client-go/third_party/forked/golang/template
 k8s.io/client-go/tools/auth
 k8s.io/client-go/tools/cache
@@ -658,6 +709,7 @@ k8s.io/klog/v2/internal/buffer
 k8s.io/klog/v2/internal/clock
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
+k8s.io/klog/v2/klogr
 # k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42
 ## explicit; go 1.16
 k8s.io/kube-openapi/pkg/builder3/util
@@ -681,8 +733,9 @@ k8s.io/utils/net
 k8s.io/utils/pointer
 k8s.io/utils/strings/slices
 k8s.io/utils/trace
-# sigs.k8s.io/cluster-api v1.1.4
+# sigs.k8s.io/cluster-api v1.1.5
 ## explicit; go 1.17
+sigs.k8s.io/cluster-api/api/v1alpha3
 sigs.k8s.io/cluster-api/api/v1alpha4
 sigs.k8s.io/cluster-api/api/v1beta1
 sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1
@@ -702,6 +755,20 @@ sigs.k8s.io/cluster-api/util/patch
 sigs.k8s.io/cluster-api/util/predicates
 sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/version
+# sigs.k8s.io/cluster-api-provider-vsphere v1.3.1
+## explicit; go 1.17
+sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha3
+sigs.k8s.io/cluster-api-provider-vsphere/apis/v1alpha4
+sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1
+sigs.k8s.io/cluster-api-provider-vsphere/apis/vmware/v1beta1
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/context
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/context/vmware
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/record
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/services
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/services/network
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/session
+sigs.k8s.io/cluster-api-provider-vsphere/pkg/util
 # sigs.k8s.io/controller-runtime v0.12.1
 ## explicit; go 1.17
 sigs.k8s.io/controller-runtime
@@ -713,6 +780,7 @@ sigs.k8s.io/controller-runtime/pkg/certwatcher/metrics
 sigs.k8s.io/controller-runtime/pkg/client
 sigs.k8s.io/controller-runtime/pkg/client/apiutil
 sigs.k8s.io/controller-runtime/pkg/client/config
+sigs.k8s.io/controller-runtime/pkg/client/fake
 sigs.k8s.io/controller-runtime/pkg/cluster
 sigs.k8s.io/controller-runtime/pkg/config
 sigs.k8s.io/controller-runtime/pkg/config/v1alpha1

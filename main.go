@@ -25,6 +25,7 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"sigs.k8s.io/cluster-api-provider-vsphere/pkg/manager"
 	kcpv1beta1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -74,7 +75,7 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.DurationVar(&syncPeriod, "sync-period", 30*time.Second,
+	flag.DurationVar(&syncPeriod, "sync-period", 5*time.Minute,
 		"The minimum interval at which watched resources are reconciled (e.g. 15m)")
 	flag.IntVar(&concurrency, "concurrency", 10,
 		"The number of VCD machines to process simultaneously")
@@ -85,6 +86,7 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
+	syncPeriod = manager.DefaultSyncPeriod
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{

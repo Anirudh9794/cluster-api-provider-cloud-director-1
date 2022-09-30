@@ -65,7 +65,10 @@ var (
 		StartIP: "192.168.8.2",
 		EndIP:   "192.168.8.100",
 	}
-	SkipRDE = vcdutil.Str2Bool(os.Getenv(EnvSkipRDE))
+	SkipRDE         = vcdutil.Str2Bool(os.Getenv(EnvSkipRDE))
+	prevTimeCluster = time.Now()
+	count           = 0.0
+	average         = 0.0
 )
 
 // VCDClusterReconciler reconciles a VCDCluster object
@@ -365,6 +368,16 @@ func (r *VCDClusterReconciler) constructAndCreateRDEFromCluster(ctx context.Cont
 func (r *VCDClusterReconciler) reconcileRDE(ctx context.Context, cluster *clusterv1.Cluster,
 	vcdCluster *infrav1.VCDCluster, workloadVCDClient *vcdsdk.Client, vappID string, updateExternalID bool) error {
 	log := ctrl.LoggerFrom(ctx)
+
+	count += 1
+	currTime := time.Now()
+	timeElapsed := time.Since(prevTimeCluster)
+	prevTimeCluster = currTime
+	average = (average*(count-1) + timeElapsed.Seconds()) / count
+
+	log.Info("*******************[DEBUG Cluster] Time duration elapsed since previous reconcile for cluster", "time", timeElapsed.Minutes())
+	log.Info("*****[DEBUG avg] avg time for reconciliation in seconds: ", "avg", average)
+	log.Info("********[DEBUG curtime cluster] current time", "current time", time.Now().Format("2006-01-02 15:04:05"))
 
 	org, err := workloadVCDClient.VCDClient.GetOrgByName(vcdCluster.Spec.Org)
 	if err != nil {

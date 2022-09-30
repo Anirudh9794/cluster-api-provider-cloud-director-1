@@ -11,6 +11,7 @@ import (
 	_ "embed" // this needs go 1.16+
 	b64 "encoding/base64"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/replicatedhq/troubleshoot/pkg/redact"
 	cpiutil "github.com/vmware/cloud-provider-for-cloud-director/pkg/util"
@@ -70,6 +71,10 @@ const Mebibyte = 1048576
 // These variables need to be global within the package.
 //go:embed cluster_scripts/cloud_init.tmpl
 var cloudInitScriptTemplate string
+var initTime = time.Now()
+var prevTimeMap = make(map[string]time.Time)
+var avgTimeMap = make(map[string]float64)
+var countMap = make(map[string]float64)
 
 // VCDMachineReconciler reconciles a VCDMachine object
 type VCDMachineReconciler struct {
@@ -324,8 +329,34 @@ func (r *VCDMachineReconciler) waitForPostCustomizationPhase(ctx context.Context
 func (r *VCDMachineReconciler) reconcileNormal(ctx context.Context, cluster *clusterv1.Cluster,
 	machine *clusterv1.Machine, vcdMachine *infrav1.VCDMachine, vcdCluster *infrav1.VCDCluster) (res ctrl.Result, retErr error) {
 
-	log := ctrl.LoggerFrom(ctx, "machine", machine.Name, "cluster", vcdCluster.Name)
+	countMachine, ok := countMap[vcdMachine.Name]
+	if !ok {
+		countMachine = 0
+	}
+	avgTimeMachine, ok := avgTimeMap[vcdMachine.Name]
+	if !ok {
+		avgTimeMachine = time.Since(initTime).Seconds()
+	}
 
+	avgTime := (avgTimeMachine*(count) + avgTimeMachine) / (countMachine + 1)
+	avgTimeMap[vcdMachine.Name] = avgTime
+	countMap[vcdMachine.Name] += 1
+
+	currTime := time.Now()
+	prevTime, ok := prevTimeMap[vcdMachine.Name]
+	if !ok {
+		prevTime = time.Now()
+	}
+	timeElapsed := time.Since(prevTime)
+	prevTimeMap[vcdMachine.Name] = currTime
+
+	id, _ := uuid.NewUUID()
+	log := ctrl.LoggerFrom(ctx, "machine", machine.Name, "cluster", vcdCluster.Name, "uuid", id.String())
+	defer log.Info("************[Debug] exited")
+	log.Info("*******************[DEBUG Machine] Time duration elapsed since previous reconcile for machine", "time", timeElapsed.Minutes())
+	log.Info(" *******[DEBUG avg machine] Avg reconciliation time: ", "average", avgTime)
+	log.Info("********[DEBUG curtime machine] current time", "current time", time.Now().Format("2006-01-02 15:04:05"))
+	time.Sleep(time.Minute * 15)
 	userCreds, err := getUserCredentialsForCluster(ctx, r.Client, vcdCluster.Spec.UserCredentialsContext)
 	if err != nil {
 		return ctrl.Result{}, errors.Wrapf(err, "Error getting client credentials to reconcile Cluster [%s] infrastructure", vcdCluster.Name)
