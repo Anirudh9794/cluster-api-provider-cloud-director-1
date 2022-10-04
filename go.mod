@@ -104,3 +104,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/vmware/cloud-provider-for-cloud-director v0.0.0-20220914172655-5856ccb7a3a4 => github.com/Anirudh9794/cloud-provider-for-cloud-director v0.0.0-20221004191447-07d1a9af350a
