@@ -1,0 +1,191 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: test-cluster
+  namespace: test-cluster-ns
+  labels:
+    cluster-role.tkg.tanzu.vmware.com/management: ""
+    tanzuKubernetesRelease: v1.21.8---vmware.1-tkg.2
+    tkg.tanzu.vmware.com/cluster-name: test-cluster
+  annotations:
+    osInfo: ubuntu,20.04,amd64
+    TKGVERSION: v1.4.3
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - 100.96.0.0/11
+    serviceDomain: k8s.test
+    services:
+      cidrBlocks:
+        - 100.64.0.0/13
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: test-cluster-control-plane
+    namespace: test-cluster-ns
+  proxyConfigSpec:
+    httpProxy: null
+    httpsProxy: null
+    noProxy: "localhost,127.0.0.1,k8s.test,.svc"
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: VCDCluster
+    name: test-cluster
+    namespace: test-cluster-ns
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: capi-user-credentials
+  namespace: test-cluster-ns
+type: Opaque
+data:
+  username: __USERNAME_B64_ENCODED__
+  refreshToken: __REFRESH_TOKEN_B64_ENCODED__
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDCluster
+metadata:
+  name: test-cluster
+  namespace: test-cluster-ns
+spec:
+  site: __VCD_SITE__
+  org: cluster-org
+  ovdc: cluster-orgvdc
+  ovdcNetwork: orgvdc_nw
+  rdeId: urn:vcloud:entity:vmware:capvcdCluster:7309412c-d94f-40b5-9e9f-341721c3472a
+  parentUid: null
+  loadBalancerConfigSpec:
+    vipSubnet: null
+  useAsManagementCluster: false
+  userContext:
+    secretRef:
+      name: capi-user-credentials
+      namespace: test-cluster-ns
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDMachineTemplate
+metadata:
+  name: test-cluster-control-plane
+  namespace: test-cluster-ns
+spec:
+  template:
+    spec:
+      catalog: cse
+      template: Ubuntu 20.04 and Kubernetes v1.21.8+vmware.1
+      sizingPolicy: TKG small
+      storageProfile: "*"
+      diskSize: 20Gi
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: test-cluster-control-plane
+  namespace: test-cluster-ns
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      apiServer:
+        certSANs:
+          - localhost
+          - 127.0.0.1
+      controllerManager:
+        extraArgs:
+          enable-hostpath-provisioner: "true"
+      dns:
+        imageRepository: projects.registry.vmware.com/tkg
+        imageTag: v1.8.0_vmware.11
+      etcd:
+        local:
+          imageRepository: projects.registry.vmware.com/tkg
+          imageTag: v3.4.13_vmware.25
+      imageRepository: projects.registry.vmware.com/tkg
+    users:
+      - name: root
+        sshAuthorizedKeys:
+          - ssh-rsa
+            AAAAB3NzaC1yc2EAAAADAQABAAABgQCtaSE4OYdxA7QCgvU37L7pCMV3D/Ep31yNJgbuezvna4a8u5mukb/+vDhKmxPe7BisrO5tePrpitADsxi6Kto/KRImzvH1P8ifHONXdu+AdsAYob4/I7wHqpso5208h63cRuFxA5ZccjxVhnEeQ4fdAUMHHtro8zpp/QxhrEy8Os3WNr3s4YiXijw83DG6fAFhVr3L/vRk6fbh1beIdfMeHexqbtVpYoa9KdoPAz+qO0/AiNy9hwS8LzlhwhtKPf6iFjaBVGHrNjNdwWx0Exlf66U3SBiEguV4fWnst4vxNKGT8xjeznq+MW0BW6bMxXK4RuZ+aWM6c7Tg0sjvCO3SoyIEgMTQJkOUIP+K/WPZ9llpF5xKGM/K2VGT2QwDpXEyE+6byKJP8EavmvgbByWV7UckearPqiwbSETX/2TtcWYKkwsbEGW9GrWEVeSE78X1XloT4XXWWdjDyy2YtVmsG+vtD8zPHvAc2KraKHCZ8XG0VbxA4JHR10jrZ5FCRG8=
+            shamasundara@shamasundar-a02.vmware.com
+    initConfiguration:
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+        kubeletExtraArgs:
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cloud-provider: external
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+        kubeletExtraArgs:
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cloud-provider: external
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: VCDMachineTemplate
+      name: test-cluster-control-plane
+      namespace: test-cluster-ns
+  replicas: 1
+  version: v1.21.8+vmware.1
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: VCDMachineTemplate
+metadata:
+  name: test-cluster-worker-pool-1
+  namespace: test-cluster-ns
+spec:
+  template:
+    spec:
+      catalog: cse
+      template: Ubuntu 20.04 and Kubernetes v1.21.8+vmware.1
+      sizingPolicy: TKG small
+      storageProfile: "*"
+      enableNvidiaGPU: false
+      diskSize: 20Gi
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-cluster-worker-pool-1
+  namespace: test-cluster-ns
+spec:
+  template:
+    spec:
+      users:
+        - name: root
+          sshAuthorizedKeys:
+            - ssh-rsa
+              AAAAB3NzaC1yc2EAAAADAQABAAABgQCtaSE4OYdxA7QCgvU37L7pCMV3D/Ep31yNJgbuezvna4a8u5mukb/+vDhKmxPe7BisrO5tePrpitADsxi6Kto/KRImzvH1P8ifHONXdu+AdsAYob4/I7wHqpso5208h63cRuFxA5ZccjxVhnEeQ4fdAUMHHtro8zpp/QxhrEy8Os3WNr3s4YiXijw83DG6fAFhVr3L/vRk6fbh1beIdfMeHexqbtVpYoa9KdoPAz+qO0/AiNy9hwS8LzlhwhtKPf6iFjaBVGHrNjNdwWx0Exlf66U3SBiEguV4fWnst4vxNKGT8xjeznq+MW0BW6bMxXK4RuZ+aWM6c7Tg0sjvCO3SoyIEgMTQJkOUIP+K/WPZ9llpF5xKGM/K2VGT2QwDpXEyE+6byKJP8EavmvgbByWV7UckearPqiwbSETX/2TtcWYKkwsbEGW9GrWEVeSE78X1XloT4XXWWdjDyy2YtVmsG+vtD8zPHvAc2KraKHCZ8XG0VbxA4JHR10jrZ5FCRG8=
+              shamasundara@shamasundar-a02.vmware.com
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /run/containerd/containerd.sock
+          kubeletExtraArgs:
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            cloud-provider: external
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: test-cluster-worker-pool-1
+  namespace: test-cluster-ns
+spec:
+  clusterName: test-cluster
+  replicas: 1
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: test-cluster-worker-pool-1
+          namespace: test-cluster-ns
+      clusterName: test-cluster
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: VCDMachineTemplate
+        name: test-cluster-worker-pool-1
+        namespace: test-cluster-ns
+      version: v1.21.8+vmware.1
