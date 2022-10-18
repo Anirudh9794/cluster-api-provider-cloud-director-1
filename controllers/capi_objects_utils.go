@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/vmware/cloud-provider-for-cloud-director/pkg/vcdsdk"
 	infrav1 "github.com/vmware/cluster-api-provider-cloud-director/api/v1beta1"
 	rdeType "github.com/vmware/cluster-api-provider-cloud-director/pkg/vcdtypes/rde_type_1_1_0"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -245,7 +247,7 @@ func getAllMachinesInKCP(ctx context.Context, cli client.Client, kcp kcpv1.Kubea
 	return machinesWithKCPOwnerRef, nil
 }
 
-func getNodePoolList(ctx context.Context, cli client.Client, cluster clusterv1.Cluster) ([]rdeType.NodePool, error) {
+func getNodePoolList(ctx context.Context, workloadVCDClient *vcdsdk.Client, cli client.Client, cluster clusterv1.Cluster) ([]rdeType.NodePool, error) {
 	nodePoolList := make([]rdeType.NodePool, 0)
 	mds, err := getAllMachineDeploymentsForCluster(ctx, cli, cluster)
 	if err != nil {
@@ -270,6 +272,27 @@ func getNodePoolList(ctx context.Context, cli client.Client, cluster clusterv1.C
 		if md.Spec.Replicas != nil {
 			desiredReplicasCount = *md.Spec.Replicas
 		}
+		diskSize := vcdMachineTemplate.Spec.Template.Spec.DiskSize
+		if diskSize.IsZero() {
+			templateName := vcdMachineTemplate.Spec.Template.Spec.Template
+			orgManager, err := vcdsdk.NewOrgManager(workloadVCDClient, workloadVCDClient.ClusterOrgName)
+			if err != nil {
+				return nil, fmt.Errorf("failed ot get org manager using client for cluster org [%s]", workloadVCDClient.ClusterOrgName)
+			}
+			catalog, err := orgManager.GetCatalogByName(vcdMachineTemplate.Spec.Template.Spec.Catalog)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get catalog by name [%s]", vcdMachineTemplate.Spec.Template.Spec.Catalog)
+			}
+			catalogItem, err := catalog.GetCatalogItemByName(templateName, true)
+			if err != nil {
+				return nil, fmt.Errorf("failed to fetch catalog item by name [%s]: [%v]", templateName, err)
+			}
+			vappTemplate, err := catalogItem.GetVAppTemplate()
+			if err != nil {
+				return nil, fmt.Errorf("errore while fetching VApp template: [%v]", err)
+			}
+		}
+
 		nodePool := rdeType.NodePool{
 			Name:              md.Name,
 			SizingPolicy:      vcdMachineTemplate.Spec.Template.Spec.SizingPolicy,
