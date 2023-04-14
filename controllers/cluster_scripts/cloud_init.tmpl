@@ -90,6 +90,7 @@ write_files:
     CSI_DRIVER_PATH=/root/csi-driver.yaml
     CSI_CONTROLLER_PATH=/root/csi-controller.yaml
     CSI_NODE_PATH=/root/csi-node.yaml {{- end }}
+    KUBEADM_ERR_FILE_PATH={{- if .ControlPlane }}/root/kubeadm_init.err{{- else -}}/root/kubeadm_join.err{{- end }}
 
     vmtoolsd --cmd "info-set guestinfo.postcustomization.networkconfiguration.status in_progress"
     echo 'net.ipv6.conf.all.disable_ipv6 = 1' >> /etc/sysctl.conf
@@ -141,10 +142,11 @@ write_files:
       NEW_TAG_VERSION=$(echo $IMAGE_REF | sed 's/.*://' | sed 's/_/-/')
       ctr -n=k8s.io image tag $IMAGE_REF $REF_PATH:$NEW_TAG_VERSION
     done
-    {{ .BootstrapRunCmd }}
+    {{ .BootstrapRunCmd }} 2> {{- if .ControlPlane }}/root/kubeadm_init.err{{- else -}}/root/kubeadm_join.err{{- end }}
     if [[ ! -f /run/cluster-api/bootstrap-success.complete ]]
     then
       echo "file /run/cluster-api/bootstrap-success.complete not found" &>> /var/log/capvcd/customization/error.log
+      cat {{- if .ControlPlane }}/root/kubeadm_init.err{{- else -}}/root/kubeadm_join.err{{- end }} &>> /var/log/capvcd/customization/error.log
     exit 1
     fi
     vmtoolsd --cmd "info-set {{ if .ControlPlane -}} guestinfo.postcustomization.kubeinit.status {{- else -}} guestinfo.postcustomization.kubeadm.node.join.status {{- end }} successful"
