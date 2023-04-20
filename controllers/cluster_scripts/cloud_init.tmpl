@@ -68,6 +68,10 @@ write_files:
       vmtoolsd --cmd "info-set guestinfo.post_customization_script_execution_status $?"
       ERROR_MESSAGE="$(date) $(caller): $BASH_COMMAND"
       echo "$ERROR_MESSAGE" &>> /var/log/capvcd/customization/error.log
+      if [[ -f /root/kubeadm.err ]]
+      then
+        KUBEADM_FAILURE=$(cat /root/kubeadm.err)
+        ERROR_MESSAGE="$ERROR_MESSAGE $KUBEADM_FAILURE"
       vmtoolsd --cmd "info-set guestinfo.post_customization_script_execution_failure_reason $ERROR_MESSAGE"
 
       CLOUD_INIT_OUTPUT=""
@@ -79,7 +83,7 @@ write_files:
     }
     mkdir -p /var/log/capvcd/customization
     trap 'catch $? $LINENO' ERR EXIT
-    set -ex
+    set -eEx
 
     echo "$(date) Post Customization script execution in progress" &>> /var/log/capvcd/customization/status.log {{- if .ControlPlane }}
 
@@ -142,12 +146,13 @@ write_files:
       NEW_TAG_VERSION=$(echo $IMAGE_REF | sed 's/.*://' | sed 's/_/-/')
       ctr -n=k8s.io image tag $IMAGE_REF $REF_PATH:$NEW_TAG_VERSION
     done
-    {{ .BootstrapRunCmd }} 2> {{- if .ControlPlane }}/root/kubeadm_init.err{{- else -}}/root/kubeadm_join.err{{- end }}
+    {
+        {{ .BootstrapRunCmd }}
+    } 2> /root/kubeadm.err
     if [[ ! -f /run/cluster-api/bootstrap-success.complete ]]
     then
       echo "file /run/cluster-api/bootstrap-success.complete not found" &>> /var/log/capvcd/customization/error.log
-      cat {{- if .ControlPlane }}/root/kubeadm_init.err{{- else -}}/root/kubeadm_join.err{{- end }} &>> /var/log/capvcd/customization/error.log
-    exit 1
+      exit 1
     fi
     vmtoolsd --cmd "info-set {{ if .ControlPlane -}} guestinfo.postcustomization.kubeinit.status {{- else -}} guestinfo.postcustomization.kubeadm.node.join.status {{- end }} successful"
 
